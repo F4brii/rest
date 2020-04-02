@@ -1,0 +1,37 @@
+version: '3.6'
+
+services:
+  nginx:
+    build: ./nginx
+    volumes:
+      - ./code/static:/static
+      - ./nginx/rest.dev.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+
+  web:
+    restart: always
+    build: 
+      context: ./code/dockerfile/
+      dockerfile: Dockerfile
+    command: gunicorn rest.wsgi:application -t 3600 -w 2 -b :8000 --reload
+    volumes:
+      - ./code:/code
+    expose:
+      - "8000"
+    depends_on:
+      - db
+
+  db:
+    restart: always
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: data
+      POSTGRES_PASSWORD: assemblix86
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ./database:/var/lib/postgresql/data
+    expose:
+      - "5432"
